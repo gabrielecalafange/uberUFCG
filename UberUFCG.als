@@ -1,72 +1,48 @@
 module UberUFCG
 
-
 abstract sig Usuario {
-	agendamento: one Agenda,
-	moradia: one Regiao
-}
-sig Estudante extends Usuario {}
-sig Professor extends Usuario {}
-sig Servidor extends Usuario {} 
-
+    	moradia: one Regiao,
+   	tem_crédito: lone RegistroContábil,
+    	está_em_débito: lone RegistroContábil
+} 
+	sig Estudante, Professor, Servidor extends Usuario {}
+	sig Motorista, Passageiro in Usuario {}
 
 
 abstract sig Regiao {
 }
-sig Norte extends Regiao {}
-sig Sul extends Regiao {}
-sig Leste extends Regiao {}
-sig Oeste extends Regiao {} 
-sig Centro extends Regiao {} 
-
-
-
-sig Carro {
-	foi_motorista: one Usuario,
-	foi_passageiro: some Usuario
-}
-
-
-
-sig RegistroContábil {
-	tem_crédito: set Usuario,
-	está_em_débito: set Usuario
-}
+	one sig Norte, Sul, Centro, Leste, Oeste extends Regiao {}
 
 
 abstract sig Agenda {
-	corrida: set Carro
 }
-sig Ida extends Agenda {
-}
-sig Volta extends Agenda {}
+	one sig Ida_7h30, Ida_9h30, Ida_13h30, Ida_15h30, 
+			Volta_10h00, Volta_12h00, Volta_16h00, Volta_18h00 extends Agenda {}
 
+sig Corrida {
+    motorista: one Motorista,
+    passageiro: set Passageiro,
+    regiao: one Regiao,
+    horario: one Agenda
+
+} { #passageiro <= 3}
+
+
+sig RegistroContábil {
+}
 
 
 pred umaMoradia [u:Usuario] {
-	one u.moradia
-}
-pred umaCorridaPorVez [u:Usuario] {
-	one u.agendamento
-}
-pred temUmMotorista [c:Carro] {
-	one c.foi_motorista
+    one u.moradia
 }
 
 fact { 
+
 	all u:Usuario | umaMoradia[u]
-	all u:Usuario | umaCorridaPorVez[u]
-	all c:Carro | temUmMotorista[c]
+	all disj u:Usuario | no (u.tem_crédito & u.está_em_débito)
+	all disj c:Corrida | c.motorista !in c.passageiro
 
-
-  	one Norte {}
- 	one Sul {}
-  	one Leste {}
- 	one Oeste {}
-  	one Centro {}
- 	one Ida {}
-  	one Volta {}
-  	one RegistroContábil {}
+	one RegistroContábil {}	
 }
 
-run {} for 5 but exactly 3 Carro
+run {} for 5 but exactly 3 Corrida, 4 Usuario
